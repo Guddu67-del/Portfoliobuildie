@@ -19,25 +19,33 @@ export const loginUser = createAsyncThunk(
       });
 
       const data = await response.json();
+
+      // LOGIN FAILED
       if (!response.ok) {
-        return thunkAPI.rejectWithValue(data.message || "Login failed");
+        const cleanMessage = (data.message || "Login failed").replace(
+          /<[^>]*>/g,
+          ""
+        );
+
+        return thunkAPI.rejectWithValue(cleanMessage);
       }
 
       // SAVE TOKEN
       localStorage.setItem("token", data.token);
+
       localStorage.setItem(
         "user",
         JSON.stringify({
           name: data.user_display_name,
           email: data.user_email,
-        }),
+        })
       );
 
       return data;
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
     }
-  },
+  }
 );
 
 const initialState = {
@@ -56,6 +64,8 @@ const authSlice = createSlice({
     logout: (state) => {
       state.token = null;
       state.user = null;
+      state.error = null;
+
       localStorage.removeItem("token");
       localStorage.removeItem("user");
     },
@@ -72,6 +82,7 @@ const authSlice = createSlice({
       // LOGIN SUCCESS
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
+        state.error = null;
         state.token = action.payload.token;
 
         state.user = {
@@ -83,7 +94,7 @@ const authSlice = createSlice({
       // LOGIN FAILED
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload || "Login failed";
       });
   },
 });
