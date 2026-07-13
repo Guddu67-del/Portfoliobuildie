@@ -6,16 +6,29 @@ const initialProjects = JSON.parse(localStorage.getItem("projects")) || [];
 
 export const fetchProjectsAsync = createAsyncThunk(
   "projects/fetchProjectsAsync",
-
   async (_, thunkAPI) => {
     try {
-      const response = await fetch(API_URL);
+      // 1. Grab the auth state to get the token and the current user's email
+      const state = thunkAPI.getState();
+      const token = state.auth.token || localStorage.getItem("token");
+      const currentUserEmail = state.auth.user?.email;
+
+      const response = await fetch(API_URL, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       if (!response.ok) {
         throw new Error("Failed to fetch projects");
       }
 
       const data = await response.json();
-      return data.map((project) => {
+      
+      // 2. Parse all the projects coming from WordPress
+      const allProjects = data.map((project) => {
         const rawData =
           project.meta?.project_data || project.acf?.project_data || null;
 
@@ -30,8 +43,13 @@ export const fetchProjectsAsync = createAsyncThunk(
           floors: parsedData.floors || [],
           result: parsedData.result || {},
           mode: parsedData.mode || "volume",
+          authorEmail: parsedData.authorEmail || "", // Retrieve the stamped email
         };
       });
+
+      // 3. FILTER: Only return projects that belong to the logged-in user
+      return allProjects.filter((project) => project.authorEmail === currentUserEmail);
+
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
     }
@@ -40,10 +58,19 @@ export const fetchProjectsAsync = createAsyncThunk(
 
 export const saveProjectAsync = createAsyncThunk(
   "projects/saveProjectAsync",
-
   async (project, thunkAPI) => {
     try {
-      const token = localStorage.getItem("token");
+      // 1. Grab auth state
+      const state = thunkAPI.getState();
+      const token = state.auth.token || localStorage.getItem("token");
+      const currentUserEmail = state.auth.user?.email;
+
+      // 2. Stamp the project with the user's email before converting to JSON
+      const projectToSave = { 
+        ...project, 
+        authorEmail: currentUserEmail 
+      };
+
       const response = await fetch(API_URL, {
         method: "POST",
         headers: {
@@ -54,7 +81,7 @@ export const saveProjectAsync = createAsyncThunk(
           title: project.name,
           status: "publish",
           meta: {
-            project_data: JSON.stringify(project),
+            project_data: JSON.stringify(projectToSave), // Save the stamped version
           },
         }),
       });
@@ -65,7 +92,7 @@ export const saveProjectAsync = createAsyncThunk(
 
       const data = await response.json();
       return {
-        ...project,
+        ...projectToSave,
         wpId: data.id,
       };
     } catch (error) {
@@ -100,10 +127,15 @@ const projectSlice = createSlice({
       state.activeProject = action.payload;
     },
 
+    clearActiveProject: (state) => {
+      state.activeProject = null;
+    },
+
     clearProjects: (state) => {
       state.projects = [];
       localStorage.removeItem("projects");
     },
+    
     setProjects: (state, action) => {
       state.projects = action.payload;
     },
@@ -147,6 +179,7 @@ export const {
   saveProject,
   deleteProject,
   setActiveProject,
+  clearActiveProject, 
   clearProjects,
   setProjects,
 } = projectSlice.actions;

@@ -19,6 +19,7 @@ import {
   updateRoom,
   removeRoom,
   setFloors,
+  resetRooms,
 } from "../../store/slices/roomSlice";
 import { saveProjectAsync } from "../../store/slices/projectSlice";
 
@@ -50,7 +51,10 @@ const Dashboard = () => {
 
   // ROOM DATA
   const allRooms = (floors || []).flatMap((floor) => floor.rooms || []);
-  const roomData = estimateRooms(allRooms);
+  const calculatedRoomData = estimateRooms(allRooms);
+
+  // Use saved project data if available, otherwise fallback to live calculation
+  const displayRoomData = activeProject?.roomData || calculatedRoomData;
 
   const handleAddFloor = () => {
     dispatch(addFloor());
@@ -92,6 +96,7 @@ const Dashboard = () => {
     );
   };
 
+
   // SAVE PROJECT
   const handleSaveProject = () => {
     if (!result) {
@@ -105,7 +110,7 @@ const Dashboard = () => {
       formData,
       mode,
       floors,
-      roomData,
+      roomData: displayRoomData,
       result,
       createdAt: new Date().toISOString(),
     };
@@ -114,7 +119,6 @@ const Dashboard = () => {
     setProjectName("");
     alert("Project Saved!");
   };
-
   // CALCULATE
   const handleCalculate = ({ grade, volume, length, width, slabThickness }) => {
     let finalVolume = Number(volume);
@@ -129,12 +133,12 @@ const Dashboard = () => {
         setResult(null);
         return;
       }
-
       finalVolume = L * W * slabT;
     }
 
     // Room wall calculation
-    finalVolume += roomData.totals.brickVolume;
+    // Use calculatedRoomData here instead of the undefined roomData
+    finalVolume += calculatedRoomData.totals.brickVolume;
 
     const finalResult = boqGenerator(grade, finalVolume);
 
@@ -150,18 +154,35 @@ const Dashboard = () => {
       ...finalResult,
       ...cost,
       totalVolume: finalVolume,
-      plasterArea: roomData.totals.plasterArea,
+      // Use calculatedRoomData here as well
+      plasterArea: calculatedRoomData.totals.plasterArea,
     });
   };
 
-  // LOAD ACTIVE PROJECT
+  // LOAD ACTIVE PROJECT OR RESET
   useEffect(() => {
-    if (!activeProject) return;
-    dispatch(setFloors(activeProject.floors));
-    setProjectName(activeProject.name);
-    setResult(activeProject.result);
-    setFormData(
-      activeProject.formData || {
+    if (activeProject) {
+      dispatch(setFloors(activeProject.floors));
+      setProjectName(activeProject.name);
+      setResult(activeProject.result);
+      setFormData(
+        activeProject.formData || {
+          grade: "M20",
+          volume: "",
+          length: "",
+          width: "",
+          slabThickness: "",
+          wallHeight: "",
+          wallThickness: "",
+        },
+      );
+      setMode(activeProject.mode || "volume");
+    } else {
+      // Clear everything out if there is no active project
+      dispatch(resetRooms());
+      setProjectName("");
+      setResult(null);
+      setFormData({
         grade: "M20",
         volume: "",
         length: "",
@@ -169,10 +190,9 @@ const Dashboard = () => {
         slabThickness: "",
         wallHeight: "",
         wallThickness: "",
-      },
-    );
-
-    setMode(activeProject.mode || "volume");
+      });
+      setMode("volume");
+    }
   }, [activeProject, dispatch]);
 
   return (
@@ -309,7 +329,7 @@ const Dashboard = () => {
 
           {/* Openings Breakdown */}
           {activeSection === "breakdown" && (
-            <OpeningBreakdown roomData={roomData} />
+            <OpeningBreakdown roomData={displayRoomData} />
           )}
         </div>
       </div>

@@ -1,10 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const defaultRoom = {
-  length: 4,
-  width: 3,
-  height: 3,
-  wallThickness: 0.23,
+  length: "",
+  width: "",
+  height: "",
+  wallThickness: "",
   openings: [],
   plasterSides: 2,
 };

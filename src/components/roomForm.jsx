@@ -1,6 +1,11 @@
 import React from "react";
+import { useSelector } from "react-redux";
+import { unitConfig } from "../constants/unitConfig";
 
 const RoomForm = ({ room, index, updateRoom, removeRoom }) => {
+  const unitSystem = useSelector((state) => state.settings.unitSystem);
+  const units = unitConfig[unitSystem];
+
   const handleChange = (field, value) => {
     updateRoom(index, {
       ...room,
@@ -14,8 +19,8 @@ const RoomForm = ({ room, index, updateRoom, removeRoom }) => {
       openings: [
         ...room.openings,
         {
-          width: 1,
-          height: 1,
+          width: "",
+          height: "",
           type: "window",
         },
       ],
@@ -99,31 +104,37 @@ const RoomForm = ({ room, index, updateRoom, removeRoom }) => {
         </button>
       </div>
 
-      {/* Room Dimensions */}
+      {/* Room Dimensions with dynamic units */}
       <div className="grid grid-cols-2 gap-4">
         <input
-          placeholder="Length"
+          type="number"
+          step="any"
+          placeholder={`Length (${units.length})`}
           value={room.length || ""}
           onChange={(e) => handleChange("length", e.target.value)}
           className={inputStyle}
         />
-
         <input
-          placeholder="Width"
+          type="number"
+          step="any"
+          placeholder={`Width (${units.length})`}
           value={room.width || ""}
           onChange={(e) => handleChange("width", e.target.value)}
           className={inputStyle}
         />
-
         <input
-          placeholder="Height"
+          type="number"
+          step="any"
+          placeholder={`Height (${units.length})`}
           value={room.height || ""}
           onChange={(e) => handleChange("height", e.target.value)}
           className={inputStyle}
         />
 
         <input
-          placeholder="Wall Thickness"
+          type="number"
+          step="any"
+          placeholder={`Wall Thickness (${units.length})`}
           value={room.wallThickness || ""}
           onChange={(e) => handleChange("wallThickness", e.target.value)}
           className={inputStyle}
@@ -170,19 +181,22 @@ const RoomForm = ({ room, index, updateRoom, removeRoom }) => {
               className={inputStyle}
             >
               <option value="door">Door</option>
-
               <option value="window">Window</option>
             </select>
 
             <input
-              placeholder="Width"
+              type="number"
+              step="any"
+              placeholder={`Width (${units.length})`}
               value={op.width || ""}
               onChange={(e) => updateOpening(i, "width", e.target.value)}
               className={inputStyle}
             />
 
             <input
-              placeholder="Height"
+              type="number"
+              step="any"
+              placeholder={`Height (${units.length})`}
               value={op.height || ""}
               onChange={(e) => updateOpening(i, "height", e.target.value)}
               className={inputStyle}

@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { loginUser } from "../../store/slices/authSlice";
-import { Navigate, Link } from "react-router-dom"; // Added Link here
+import { registerUser } from "../../store/slices/authSlice"; // Adjust path if necessary
+import { Navigate, Link } from "react-router-dom";
 
-const Login = () => {
+const Register = () => {
   const dispatch = useDispatch();
+  // We check for token to redirect just like in Login.jsx
   const { token, loading, error, user } = useSelector((state) => state.auth);
   const [formData, setFormData] = useState({
     username: "",
+    email: "",
     password: "",
   });
 
@@ -20,10 +22,10 @@ const Login = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(loginUser(formData));
+    dispatch(registerUser(formData));
   };
 
-  // Redirect after login
+  // Redirect after successful registration (since it auto-logs in)
   if (token) {
     return <Navigate to="/" replace />;
   }
@@ -33,10 +35,12 @@ const Login = () => {
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6">
         {/* Heading */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold dark:text-white">Buildie Login</h1>
+          <h1 className="text-3xl font-bold dark:text-white">
+            Buildie Sign Up
+          </h1>
 
           <p className="text-gray-500 dark:text-gray-400 mt-2">
-            Login to manage your projects
+            Create an account to manage your projects
           </p>
         </div>
 
@@ -61,6 +65,37 @@ const Login = () => {
               value={formData.username}
               onChange={handleChange}
               placeholder="Enter username"
+              className="
+                w-full
+                px-4
+                py-3
+                rounded-xl
+                border
+                border-gray-300
+                dark:border-gray-700
+                bg-white
+                dark:bg-gray-900
+                dark:text-white
+                focus:outline-none
+                focus:ring-2
+                focus:ring-blue-500
+              "
+              required
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block mb-2 text-sm font-medium dark:text-white">
+              Email
+            </label>
+
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter email address"
               className="
                 w-full
                 px-4
@@ -126,25 +161,18 @@ const Login = () => {
               transition
             "
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Registering..." : "Sign Up"}
           </button>
         </form>
 
-        {/* User */}
-        {user && (
-          <div className="text-center text-green-600 dark:text-green-400">
-            Logged in as {user.name}
-          </div>
-        )}
-
-        {/* Link to Register */}
+        {/* Link back to Login */}
         <div className="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
-          Don't have an account?{" "}
+          Already have an account?{" "}
           <Link
-            to="/register"
+            to="/login"
             className="font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400 transition"
           >
-            Sign up
+            Log in
           </Link>
         </div>
       </div>
@@ -152,4 +180,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Register;

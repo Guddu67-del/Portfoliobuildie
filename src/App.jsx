@@ -9,6 +9,7 @@ import { useSelector } from "react-redux";
 import ProjectDetails from "./pages/ProjectDetails/ProjectDetails";
 import Login from "./pages/Auth/Login";
 import ProtectedRoute from "./components/protectedRoutes";
+import Register from "./pages/Auth/Register";
 
 function App() {
   const theme = useSelector((state) => state.settings.theme);
@@ -59,6 +60,7 @@ function App() {
           />
           <Route path="/blog" element={<Blog />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
         </Route>
       </Routes>
     </BrowserRouter>

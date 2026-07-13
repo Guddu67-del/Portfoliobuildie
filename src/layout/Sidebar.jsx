@@ -1,6 +1,11 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../store/slices/authSlice";
+// NEW: Import the clear actions from your project slice
+import {
+  clearProjects,
+  clearActiveProject,
+} from "../store/slices/projectSlice";
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -14,7 +19,14 @@ const Sidebar = () => {
     }`;
 
   const handleLogout = () => {
+    // 1. Log the user out (clears token)
     dispatch(logout());
+
+    // 2. Wipe all cached project data from Redux and LocalStorage
+    dispatch(clearProjects());
+    dispatch(clearActiveProject());
+
+    // 3. Redirect to login
     navigate("/login");
   };
 

@@ -5,6 +5,7 @@ import rateReducer from "./slices/rateSlice";
 import projectReducer from "./slices/projectSlice";
 import settingsReducer from "./slices/settingsSlice";
 
+
 export const store = configureStore({
   reducer: {
     rooms: roomReducer,

@@ -5,6 +5,7 @@ import {
   deleteProject,
   setActiveProject,
   fetchProjectsAsync,
+  clearActiveProject,
 } from "../../store/slices/projectSlice";
 
 const Projects = () => {
@@ -15,25 +16,58 @@ const Projects = () => {
   useEffect(() => {
     dispatch(fetchProjectsAsync());
   }, [dispatch]);
+  
   const projects = useSelector((state) => state.projects.projects);
+  
   const handleDelete = (id) => {
     dispatch(deleteProject(id));
   };
 
+  // Opens the read-only Project Details page
   const handleOpenProject = (project) => {
     dispatch(setActiveProject(project));
     navigate(`/projects/${project.id}`);
+  };
+
+  // NEW: Loads the project data into the Dashboard inputs for editing
+  const handleEditProject = (project) => {
+    dispatch(setActiveProject(project));
+    navigate("/"); 
+  };
+
+  // Starts a completely blank project
+  const handleNewProject = () => {
+    dispatch(clearActiveProject());
+    navigate("/");
   };
 
   return (
     <div className="p-6 space-y-6">
       {/* Heading */}
       <div className="flex items-center justify-between">
-        <h1 className="text-4xl font-bold dark:text-white">Saved Projects</h1>
-
-        <span className="text-sm text-gray-500 dark:text-gray-400">
-          {projects.length} Projects
-        </span>
+        <div>
+          <h1 className="text-4xl font-bold dark:text-white">Saved Projects</h1>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            {projects.length} Projects
+          </span>
+        </div>
+        
+        {/* New Project Button */}
+        <button
+          onClick={handleNewProject}
+          className="
+            bg-green-600
+            hover:bg-green-700
+            transition
+            text-white
+            px-4
+            py-2
+            rounded-lg
+            font-medium
+          "
+        >
+          + New Project
+        </button>
       </div>
 
       {/* Empty State */}
@@ -95,6 +129,7 @@ const Projects = () => {
 
             {/* Actions */}
             <div className="flex gap-3 items-start">
+              {/* View/Open Button */}
               <button
                 onClick={() => handleOpenProject(project)}
                 className="
@@ -111,6 +146,24 @@ const Projects = () => {
                 Open
               </button>
 
+              {/* NEW: Edit Button */}
+              <button
+                onClick={() => handleEditProject(project)}
+                className="
+                  bg-indigo-600
+                  hover:bg-indigo-700
+                  transition
+                  text-white
+                  px-4
+                  py-2
+                  rounded-lg
+                  font-medium
+                "
+              >
+                Edit
+              </button>
+
+              {/* Delete Button */}
               <button
                 onClick={() => handleDelete(project.id)}
                 className="

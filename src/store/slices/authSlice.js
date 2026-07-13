@@ -1,13 +1,49 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-const API_URL = "http://localhost/Mywp/wp-json/jwt-auth/v1/token";
+const LOGIN_API_URL = "http://localhost/Mywp/wp-json/jwt-auth/v1/token";
+// Your new custom endpoint
+const REGISTER_API_URL = "http://localhost/Mywp/wp-json/custom/v1/register"; 
 
-// LOGIN THUNK
+// 1. REGISTER THUNK
+export const registerUser = createAsyncThunk(
+  "auth/registerUser",
+  async ({ username, email, password }, thunkAPI) => {
+    try {
+      const response = await fetch(REGISTER_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const cleanMessage = (data.message || "Registration failed").replace(/<[^>]*>/g, "");
+        return thunkAPI.rejectWithValue(cleanMessage);
+      }
+
+      // Automatically log the user in after successful registration
+      await thunkAPI.dispatch(loginUser({ username, password })).unwrap();
+
+      return data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
+    }
+  }
+);
+
+// 2. EXISTING LOGIN THUNK
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async ({ username, password }, thunkAPI) => {
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetch(LOGIN_API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -20,19 +56,12 @@ export const loginUser = createAsyncThunk(
 
       const data = await response.json();
 
-      // LOGIN FAILED
       if (!response.ok) {
-        const cleanMessage = (data.message || "Login failed").replace(
-          /<[^>]*>/g,
-          ""
-        );
-
+        const cleanMessage = (data.message || "Login failed").replace(/<[^>]*>/g, "");
         return thunkAPI.rejectWithValue(cleanMessage);
       }
 
-      // SAVE TOKEN
       localStorage.setItem("token", data.token);
-
       localStorage.setItem(
         "user",
         JSON.stringify({
@@ -50,9 +79,7 @@ export const loginUser = createAsyncThunk(
 
 const initialState = {
   token: localStorage.getItem("token") || null,
-  user: localStorage.getItem("user")
-    ? JSON.parse(localStorage.getItem("user"))
-    : null,
+  user: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null,
   loading: false,
   error: null,
 };
@@ -65,40 +92,45 @@ const authSlice = createSlice({
       state.token = null;
       state.user = null;
       state.error = null;
-
       localStorage.removeItem("token");
       localStorage.removeItem("user");
     },
   },
-
   extraReducers: (builder) => {
     builder
-      // LOGIN PENDING
+      // LOGIN CASES
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-
-      // LOGIN SUCCESS
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.error = null;
         state.token = action.payload.token;
-
         state.user = {
           name: action.payload.user_display_name,
           email: action.payload.user_email,
         };
       })
-
-      // LOGIN FAILED
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Login failed";
+      })
+      // REGISTRATION CASES
+      .addCase(registerUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Registration failed";
       });
   },
 });
 
 export const { logout } = authSlice.actions;
-
 export default authSlice.reducer;
