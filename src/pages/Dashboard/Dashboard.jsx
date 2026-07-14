@@ -96,7 +96,6 @@ const Dashboard = () => {
     );
   };
 
-
   // SAVE PROJECT
   const handleSaveProject = () => {
     if (!result) {
@@ -139,6 +138,9 @@ const Dashboard = () => {
     // Room wall calculation
     // Use calculatedRoomData here instead of the undefined roomData
     finalVolume += calculatedRoomData.totals.brickVolume;
+
+    console.log("Rooms:", allRooms);
+    console.log("Calculated:", calculatedRoomData);
 
     const finalResult = boqGenerator(grade, finalVolume);
 

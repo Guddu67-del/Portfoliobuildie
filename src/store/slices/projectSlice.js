@@ -1,55 +1,14 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-const API_URL = "http://localhost/Mywp/wp-json/wp/v2/buildie_project";
-
 const initialProjects = JSON.parse(localStorage.getItem("projects")) || [];
 
 export const fetchProjectsAsync = createAsyncThunk(
   "projects/fetchProjectsAsync",
   async (_, thunkAPI) => {
     try {
-      // 1. Grab the auth state to get the token and the current user's email
-      const state = thunkAPI.getState();
-      const token = state.auth.token || localStorage.getItem("token");
-      const currentUserEmail = state.auth.user?.email;
+      const projects = JSON.parse(localStorage.getItem("projects")) || [];
 
-      const response = await fetch(API_URL, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch projects");
-      }
-
-      const data = await response.json();
-      
-      // 2. Parse all the projects coming from WordPress
-      const allProjects = data.map((project) => {
-        const rawData =
-          project.meta?.project_data || project.acf?.project_data || null;
-
-        const parsedData = rawData ? JSON.parse(rawData) : {};
-
-        return {
-          id: project.id,
-          name: project.title.rendered,
-          createdAt: project.date,
-          formData: parsedData.formData || {},
-          roomData: parsedData.roomData || {},
-          floors: parsedData.floors || [],
-          result: parsedData.result || {},
-          mode: parsedData.mode || "volume",
-          authorEmail: parsedData.authorEmail || "", // Retrieve the stamped email
-        };
-      });
-
-      // 3. FILTER: Only return projects that belong to the logged-in user
-      return allProjects.filter((project) => project.authorEmail === currentUserEmail);
-
+      return projects;
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
     }
@@ -60,41 +19,19 @@ export const saveProjectAsync = createAsyncThunk(
   "projects/saveProjectAsync",
   async (project, thunkAPI) => {
     try {
-      // 1. Grab auth state
-      const state = thunkAPI.getState();
-      const token = state.auth.token || localStorage.getItem("token");
-      const currentUserEmail = state.auth.user?.email;
+      const projects = JSON.parse(localStorage.getItem("projects")) || [];
 
-      // 2. Stamp the project with the user's email before converting to JSON
-      const projectToSave = { 
-        ...project, 
-        authorEmail: currentUserEmail 
+      const newProject = {
+        ...project,
+        id: Date.now(),
+        createdAt: new Date().toISOString(),
       };
 
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: project.name,
-          status: "publish",
-          meta: {
-            project_data: JSON.stringify(projectToSave), // Save the stamped version
-          },
-        }),
-      });
+      projects.unshift(newProject);
 
-      if (!response.ok) {
-        throw new Error("Failed to save project");
-      }
+      localStorage.setItem("projects", JSON.stringify(projects));
 
-      const data = await response.json();
-      return {
-        ...projectToSave,
-        wpId: data.id,
-      };
+      return newProject;
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
     }
@@ -135,7 +72,7 @@ const projectSlice = createSlice({
       state.projects = [];
       localStorage.removeItem("projects");
     },
-    
+
     setProjects: (state, action) => {
       state.projects = action.payload;
     },
@@ -179,7 +116,7 @@ export const {
   saveProject,
   deleteProject,
   setActiveProject,
-  clearActiveProject, 
+  clearActiveProject,
   clearProjects,
   setProjects,
 } = projectSlice.actions;

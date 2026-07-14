@@ -1,85 +1,61 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-const LOGIN_API_URL = "http://localhost/Mywp/wp-json/jwt-auth/v1/token";
-// Your new custom endpoint
-const REGISTER_API_URL = "http://localhost/Mywp/wp-json/custom/v1/register"; 
 
 // 1. REGISTER THUNK
 export const registerUser = createAsyncThunk(
   "auth/registerUser",
   async ({ username, email, password }, thunkAPI) => {
     try {
-      const response = await fetch(REGISTER_API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          email,
-          password,
-        }),
-      });
+      const demoUser = {
+        name: username,
+        email,
+      };
 
-      const data = await response.json();
+      localStorage.setItem("token", "demo-token");
 
-      if (!response.ok) {
-        const cleanMessage = (data.message || "Registration failed").replace(/<[^>]*>/g, "");
-        return thunkAPI.rejectWithValue(cleanMessage);
-      }
+      localStorage.setItem("user", JSON.stringify(demoUser));
 
-      // Automatically log the user in after successful registration
-      await thunkAPI.dispatch(loginUser({ username, password })).unwrap();
-
-      return data;
+      return {
+        token: "demo-token",
+        user_display_name: username,
+        user_email: email,
+      };
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
     }
-  }
+  },
 );
 
-// 2. EXISTING LOGIN THUNK
+// 2.  LOGIN THUNK
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
-  async ({ username, password }, thunkAPI) => {
+  async ({ username }, thunkAPI) => {
     try {
-      const response = await fetch(LOGIN_API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          password,
-        }),
-      });
+      const demoUser = {
+        name: username,
+        email: `${username}@buildie.demo`,
+      };
 
-      const data = await response.json();
+      localStorage.setItem("token", "demo-token");
 
-      if (!response.ok) {
-        const cleanMessage = (data.message || "Login failed").replace(/<[^>]*>/g, "");
-        return thunkAPI.rejectWithValue(cleanMessage);
-      }
+      localStorage.setItem("user", JSON.stringify(demoUser));
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          name: data.user_display_name,
-          email: data.user_email,
-        })
-      );
-
-      return data;
+      return {
+        token: "demo-token",
+        user_display_name: demoUser.name,
+        user_email: demoUser.email,
+      };
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
     }
-  }
+  },
 );
 
 const initialState = {
   token: localStorage.getItem("token") || null,
-  user: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null,
+  user: localStorage.getItem("user")
+    ? JSON.parse(localStorage.getItem("user"))
+    : null,
   loading: false,
   error: null,
 };

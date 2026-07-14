@@ -36,7 +36,7 @@ const Login = () => {
           <h1 className="text-3xl font-bold dark:text-white">Buildie Login</h1>
 
           <p className="text-gray-500 dark:text-gray-400 mt-2">
-            Login to manage your projects
+            Demo Mode - Enter any username and password
           </p>
         </div>
 
