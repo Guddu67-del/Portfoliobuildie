@@ -46,26 +46,10 @@ const Projects = () => {
         <div>
           <h1 className="text-4xl font-bold dark:text-white">Saved Projects</h1>
 
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            {projects.length} Projects
-          </span>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {projects.length} Project{projects.length !== 1 ? "s" : ""}
+          </p>
         </div>
-
-        <button
-          onClick={handleNewProject}
-          className="
-            bg-green-600
-            hover:bg-green-700
-            transition
-            text-white
-            px-5
-            py-2
-            rounded-lg
-            font-medium
-          "
-        >
-          + New Project
-        </button>
       </div>
 
       {projects.length === 0 ? (
@@ -100,7 +84,7 @@ const Projects = () => {
               transition
             "
           >
-            Create First Project
+           Go to Dashboard
           </button>
         </div>
       ) : (
